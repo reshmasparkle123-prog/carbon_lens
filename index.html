@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CarbonLens – Track & Reduce Your Footprint</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f0a; --surface: #111811; --card: #162016; --border: #1e2e1e;
+      --green: #4ade80; --green-dim: #16a34a; --green-glow: rgba(74,222,128,0.15);
+      --text: #e8f5e8; --text-dim: #6b8f6b;
+      --mono: 'Space Mono', monospace; --sans: 'Space Grotesk', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+
+    .hero { padding: 60px 24px 40px; text-align: center; position: relative; }
+    .hero::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:600px; height:300px; background:radial-gradient(ellipse, rgba(74,222,128,0.08) 0%, transparent 70%); pointer-events:none; }
+    .hero-label { font-family:var(--mono); font-size:11px; letter-spacing:3px; color:var(--green); text-transform:uppercase; margin-bottom:16px; }
+    .hero h1 { font-size:clamp(2rem,6vw,3.5rem); font-weight:700; line-height:1.1; letter-spacing:-1px; }
+    .hero h1 span { color:var(--green); }
+    .hero p { margin-top:16px; color:var(--text-dim); font-size:1rem; max-width:480px; margin-left:auto; margin-right:auto; }
+
+    .score-section { display:flex; justify-content:center; padding:32px 24px; }
+    .score-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:32px 40px; text-align:center; width:100%; max-width:360px; }
+    .ring-wrap { position:relative; width:160px; height:160px; margin:0 auto 20px; }
+    .ring-wrap svg { transform:rotate(-90deg); }
+    .ring-bg { fill:none; stroke:var(--border); stroke-width:12; }
+    .ring-fill { fill:none; stroke-width:12; stroke-linecap:round; stroke-dasharray:440; stroke-dashoffset:440; transition:stroke-dashoffset 1s ease, stroke 0.5s ease; }
+    .ring-text { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .ring-num { font-family:var(--mono); font-size:2rem; font-weight:700; line-height:1; }
+    .ring-unit { font-size:0.7rem; color:var(--text-dim); margin-top:2px; }
+    .score-label { font-size:0.85rem; color:var(--text-dim); }
+    .score-grade { display:inline-block; margin-top:10px; padding:4px 16px; border-radius:20px; font-family:var(--mono); font-size:0.8rem; font-weight:700; }
+
+    .tabs { display:flex; gap:8px; padding:0 24px; max-width:700px; margin:0 auto 24px; overflow-x:auto; scrollbar-width:none; }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tab { flex-shrink:0; padding:8px 20px; border-radius:100px; border:1px solid var(--border); background:transparent; color:var(--text-dim); font-family:var(--sans); font-size:0.85rem; cursor:pointer; transition:all 0.2s; }
+    .tab.active { background:var(--green); color:#0a0f0a; border-color:var(--green); font-weight:600; }
+
+    .panel { display:none; padding:0 24px; max-width:700px; margin:0 auto; }
+    .panel.active { display:block; }
+
+    .input-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:16px; }
+    .input-card h3 { font-size:0.9rem; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .input-card h3 .icon { width:28px; height:28px; background:var(--green-glow); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+    .field { margin-bottom:14px; }
+    .field label { display:block; font-size:0.78rem; color:var(--text-dim); margin-bottom:6px; font-family:var(--mono); }
+    .field input, .field select { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 14px; color:var(--text); font-family:var(--sans); font-size:0.9rem; outline:none; transition:border-color 0.2s; }
+    .field input:focus, .field select:focus { border-color:var(--green); }
+    .field select option { background:var(--surface); }
+
+    .calc-btn { width:100%; padding:14px; background:var(--green); color:#0a0f0a; border:none; border-radius:12px; font-family:var(--sans); font-size:1rem; font-weight:700; cursor:pointer; margin-top:8px; transition:opacity 0.2s, transform 0.1s; }
+    .calc-btn:hover { opacity:0.9; }
+    .calc-btn:active { transform:scale(0.98); }
+
+    .breakdown-item { display:flex; align-items:center; gap:12px; padding:14px; background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:8px; }
+    .breakdown-icon { font-size:20px; width:32px; text-align:center; }
+    .breakdown-info { flex:1; }
+    .breakdown-name { font-size:0.85rem; font-weight:500; }
+    .breakdown-val { font-family:var(--mono); font-size:0.8rem; color:var(--text-dim); }
+    .breakdown-bar-wrap { width:80px; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+    .breakdown-bar { height:100%; border-radius:3px; transition:width 0.8s ease; }
+
+    .tip-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:12px; display:flex; gap:14px; align-items:flex-start; }
+    .tip-icon { width:36px; height:36px; background:var(--green-glow); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+    .tip-content h4 { font-size:0.9rem; font-weight:600; margin-bottom:4px; }
+    .tip-content p { font-size:0.8rem; color:var(--text-dim); line-height:1.5; }
+    .tip-saving { font-family:var(--mono); font-size:0.72rem; color:var(--green); margin-top:6px; }
+
+    .history-item { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:8px; }
+    .history-date { font-size:0.8rem; color:var(--text-dim); font-family:var(--mono); }
+    .history-val { font-family:var(--mono); font-size:0.9rem; font-weight:700; }
+    .history-delta { font-size:0.75rem; font-family:var(--mono); }
+
+    /* AI CHAT */
+    .chat-wrap { display:flex; flex-direction:column; height:calc(100vh - 280px); min-height:400px; }
+    .chat-header { background:var(--card); border:1px solid var(--border); border-radius:16px 16px 0 0; padding:16px 20px; display:flex; align-items:center; gap:12px; }
+    .chat-avatar { width:36px; height:36px; background:var(--green-glow); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+    .chat-header-info h3 { font-size:0.9rem; font-weight:600; }
+    .chat-header-info p { font-size:0.75rem; color:var(--text-dim); }
+    .chat-dot { width:8px; height:8px; background:var(--green); border-radius:50%; margin-left:auto; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .chat-messages { flex:1; overflow-y:auto; background:var(--surface); border-left:1px solid var(--border); border-right:1px solid var(--border); padding:16px; display:flex; flex-direction:column; gap:12px; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+    .msg { max-width:85%; display:flex; flex-direction:column; gap:4px; }
+    .msg.user { align-self:flex-end; }
+    .msg.bot { align-self:flex-start; }
+    .msg-bubble { padding:12px 16px; border-radius:16px; font-size:0.88rem; line-height:1.6; }
+    .msg.user .msg-bubble { background:var(--green); color:#0a0f0a; border-radius:16px 16px 4px 16px; }
+    .msg.bot .msg-bubble { background:var(--card); border:1px solid var(--border); border-radius:16px 16px 16px 4px; }
+    .msg-time { font-size:0.68rem; color:var(--text-dim); font-family:var(--mono); padding:0 4px; }
+    .msg.user .msg-time { text-align:right; }
+
+    .typing { display:flex; gap:4px; align-items:center; padding:12px 16px; }
+    .typing span { width:6px; height:6px; background:var(--text-dim); border-radius:50%; animation:bounce 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay:0.2s; }
+    .typing span:nth-child(3) { animation-delay:0.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+    .chat-input-wrap { background:var(--card); border:1px solid var(--border); border-radius:0 0 16px 16px; padding:12px; display:flex; gap:8px; }
+    .chat-input { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 14px; color:var(--text); font-family:var(--sans); font-size:0.9rem; outline:none; transition:border-color 0.2s; resize:none; height:44px; }
+    .chat-input:focus { border-color:var(--green); }
+    .chat-send { width:44px; height:44px; background:var(--green); border:none; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:opacity 0.2s; flex-shrink:0; }
+    .chat-send:hover { opacity:0.85; }
+    .chat-send:disabled { opacity:0.4; cursor:not-allowed; }
+
+    .quick-chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .chip { padding:6px 14px; background:var(--card); border:1px solid var(--border); border-radius:100px; font-size:0.78rem; cursor:pointer; color:var(--text-dim); transition:all 0.2s; white-space:nowrap; }
+    .chip:hover { border-color:var(--green); color:var(--green); }
+
+    .empty-state { text-align:center; padding:48px 24px; color:var(--text-dim); }
+    .empty-state .e-icon { font-size:40px; margin-bottom:12px; }
+    .empty-state p { font-size:0.85rem; }
+    .bottom-pad { height:80px; }
+
+    .section-label { font-family:var(--mono); font-size:0.75rem; color:var(--text-dim); margin-bottom:12px; letter-spacing:1px; text-transform:uppercase; }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-label">🌱 CarbonLens</div>
+  <h1>Know your <span>impact.</span><br>Change your future.</h1>
+  <p>Track daily activities, measure your carbon footprint, and get personalized AI-powered insights to live greener.</p>
+</div>
+
+<div class="score-section">
+  <div class="score-card">
+    <div class="ring-wrap">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <circle class="ring-bg" cx="80" cy="80" r="70"/>
+        <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="70" stroke="#4ade80"/>
+      </svg>
+      <div class="ring-text">
+        <div class="ring-num" id="scoreNum">0</div>
+        <div class="ring-unit">kg CO₂/day</div>
+      </div>
+    </div>
+    <div class="score-label">Your daily carbon footprint</div>
+    <div class="score-grade" id="scoreGrade">— Enter data below</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('track', this)">📊 Track</button>
+  <button class="tab" onclick="switchTab('tips', this)">💡 Tips</button>
+  <button class="tab" onclick="switchTab('ai', this)">🤖 AI Chat</button>
+  <button class="tab" onclick="switchTab('history', this)">📅 History</button>
+</div>
+
+<!-- TRACK -->
+<div class="panel active" id="panel-track">
+  <div class="input-card">
+    <h3><span class="icon">🚗</span> Transport</h3>
+    <div class="field"><label>VEHICLE TYPE</label>
+      <select id="vehicleType">
+        <option value="petrol_car">Petrol Car</option>
+        <option value="diesel_car">Diesel Car</option>
+        <option value="ev">Electric Vehicle</option>
+        <option value="bike">Motorbike</option>
+        <option value="auto">Auto Rickshaw</option>
+        <option value="bus">Bus / Metro</option>
+        <option value="train">Train</option>
+        <option value="walk">Walk / Cycle</option>
+      </select>
+    </div>
+    <div class="field"><label>KM TRAVELLED TODAY</label>
+      <input type="number" id="kmTravel" placeholder="e.g. 20" min="0" value="0"/>
+    </div>
+  </div>
+  <div class="input-card">
+    <h3><span class="icon">🍽️</span> Food</h3>
+    <div class="field"><label>DIET TYPE</label>
+      <select id="dietType">
+        <option value="vegan">Vegan</option>
+        <option value="vegetarian" selected>Vegetarian (Indian)</option>
+        <option value="mixed">Mixed (some meat)</option>
+        <option value="heavy_meat">Heavy Meat Eater</option>
+      </select>
+    </div>
+    <div class="field"><label>MEALS TODAY</label>
+      <input type="number" id="meals" placeholder="e.g. 3" min="1" max="6" value="3"/>
+    </div>
+  </div>
+  <div class="input-card">
+    <h3><span class="icon">⚡</span> Energy</h3>
+    <div class="field"><label>ELECTRICITY USED (kWh)</label>
+      <input type="number" id="electricity" placeholder="e.g. 5" min="0" value="5"/>
+    </div>
+    <div class="field"><label>AC / FAN HOURS</label>
+      <input type="number" id="acHours" placeholder="e.g. 2" min="0" value="0"/>
+    </div>
+  </div>
+  <div class="input-card">
+    <h3><span class="icon">🛍️</span> Shopping & Waste</h3>
+    <div class="field"><label>ONLINE ORDERS TODAY</label>
+      <input type="number" id="orders" placeholder="e.g. 0" min="0" value="0"/>
+    </div>
+    <div class="field"><label>WASTE GENERATED</label>
+      <select id="waste">
+        <option value="low">Low (minimal waste)</option>
+        <option value="medium" selected>Medium (normal day)</option>
+        <option value="high">High (lot of packaging)</option>
+      </select>
+    </div>
+  </div>
+  <button class="calc-btn" onclick="calculate()">Calculate My Footprint →</button>
+  <div style="margin-top:24px;display:none;" id="breakdownSection">
+    <div class="section-label">Breakdown</div>
+    <div id="breakdownList"></div>
+    <div style="margin-top:12px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+      <div style="font-size:0.8rem;color:var(--text-dim);">🌳 CO₂ equivalent</div>
+      <div id="equivalent" style="font-family:var(--mono);font-size:0.85rem;margin-top:4px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TIPS -->
+<div class="panel" id="panel-tips">
+  <div id="tipsContainer">
+    <div class="empty-state"><div class="e-icon">💡</div><p>Calculate your footprint first to get personalized tips!</p></div>
+  </div>
+</div>
+
+<!-- AI CHAT -->
+<div class="panel" id="panel-ai">
+  <div class="chat-wrap">
+    <div class="chat-header">
+      <div class="chat-avatar">🌿</div>
+      <div class="chat-header-info">
+        <h3>GreenAI Assistant</h3>
+        <p>Powered by Claude · Carbon expert</p>
+      </div>
+      <div class="chat-dot"></div>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg bot">
+        <div class="msg-bubble">Hi! 👋 I'm your personal carbon footprint assistant. I can help you understand your environmental impact and suggest ways to live greener. Calculate your footprint first, or just ask me anything! 🌱</div>
+        <div class="msg-time">Now</div>
+      </div>
+    </div>
+    <div style="padding:10px 0 6px;background:var(--surface);border-left:1px solid var(--border);border-right:1px solid var(--border);padding:10px 12px 6px;">
+      <div class="quick-chips" id="quickChips">
+        <div class="chip" onclick="sendChip(this)">How to reduce my footprint?</div>
+        <div class="chip" onclick="sendChip(this)">What is carbon footprint?</div>
+        <div class="chip" onclick="sendChip(this)">Best eco habits for Indians?</div>
+        <div class="chip" onclick="sendChip(this)">Is my score good?</div>
+      </div>
+    </div>
+    <div class="chat-input-wrap">
+      <textarea class="chat-input" id="chatInput" placeholder="Ask about your carbon footprint..." rows="1" onkeydown="handleKey(event)"></textarea>
+      <button class="chat-send" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="panel" id="panel-history">
+  <div id="historyContainer">
+    <div class="empty-state"><div class="e-icon">📅</div><p>No history yet. Start tracking to see your progress!</p></div>
+  </div>
+</div>
+
+<div class="bottom-pad"></div>
+
+<script>
+  const transport = { petrol_car:0.21, diesel_car:0.17, ev:0.05, bike:0.11, auto:0.13, bus:0.089, train:0.041, walk:0 };
+  const food = { vegan:1.5, vegetarian:2.0, mixed:4.5, heavy_meat:7.5 };
+  const wasteMap = { low:0.3, medium:0.6, high:1.2 };
+
+  let currentData = {};
+  let lastScore = 0;
+
+  function calculate() {
+    const vt = document.getElementById('vehicleType').value;
+    const km = parseFloat(document.getElementById('kmTravel').value)||0;
+    const dt = document.getElementById('dietType').value;
+    const meals = parseFloat(document.getElementById('meals').value)||3;
+    const elec = parseFloat(document.getElementById('electricity').value)||0;
+    const ac = parseFloat(document.getElementById('acHours').value)||0;
+    const orders = parseFloat(document.getElementById('orders').value)||0;
+    const waste = document.getElementById('waste').value;
+
+    const tCO2 = transport[vt]*km;
+    const fCO2 = (food[dt]/3)*meals;
+    const eCO2 = elec*0.82 + ac*0.5;
+    const sCO2 = orders*0.5 + wasteMap[waste];
+    const total = tCO2+fCO2+eCO2+sCO2;
+
+    currentData = { vt, km, dt, meals, elec, ac, orders, waste, tCO2, fCO2, eCO2, sCO2, total };
+    lastScore = total;
+
+    updateRing(total);
+    renderBreakdown(tCO2, fCO2, eCO2, sCO2, total);
+    renderTips(vt, dt, elec, ac, orders, waste, tCO2, fCO2, eCO2, sCO2);
+    saveHistory(total);
+    document.getElementById('breakdownSection').style.display = 'block';
+
+    // Update equivalent
+    const trees = (total * 365 / 21).toFixed(1);
+    const km_drive = (total / 0.21).toFixed(0);
+    document.getElementById('equivalent').textContent = `= 🌳 ${trees} trees/year needed · 🚗 ${km_drive} km driving`;
+  }
+
+  function updateRing(total) {
+    const pct = Math.min(total/20, 1);
+    document.getElementById('ringFill').style.strokeDashoffset = 440*(1-pct);
+    let color, grade, gradeBg;
+    if(total<4){color='#4ade80';grade='🌿 Excellent';gradeBg='rgba(74,222,128,0.15)';}
+    else if(total<8){color='#a3e635';grade='✅ Good';gradeBg='rgba(163,230,53,0.15)';}
+    else if(total<13){color='#facc15';grade='⚠️ Average';gradeBg='rgba(250,204,21,0.15)';}
+    else{color='#f87171';grade='🔥 High Impact';gradeBg='rgba(248,113,113,0.15)';}
+    document.getElementById('ringFill').style.stroke = color;
+    document.getElementById('scoreNum').textContent = total.toFixed(1);
+    document.getElementById('scoreNum').style.color = color;
+    const g = document.getElementById('scoreGrade');
+    g.textContent = grade; g.style.background = gradeBg; g.style.color = color;
+  }
+
+  function renderBreakdown(t,f,e,s,total) {
+    const items=[{icon:'🚗',name:'Transport',val:t},{icon:'🍽️',name:'Food',val:f},{icon:'⚡',name:'Energy',val:e},{icon:'🛍️',name:'Shopping & Waste',val:s}];
+    const colors=['#4ade80','#a3e635','#facc15','#fb923c'];
+    document.getElementById('breakdownList').innerHTML = items.map((item,i)=>`
+      <div class="breakdown-item">
+        <div class="breakdown-icon">${item.icon}</div>
+        <div class="breakdown-info"><div class="breakdown-name">${item.name}</div><div class="breakdown-val">${item.val.toFixed(2)} kg CO₂</div></div>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${total>0?(item.val/total*100):0}%;background:${colors[i]}"></div></div>
+      </div>`).join('');
+  }
+
+  function renderTips(vt,dt,elec,ac,orders,waste,t,f,e,s) {
+    const tips=[];
+    if(vt==='petrol_car'||vt==='diesel_car') tips.push({icon:'🚌',title:'Switch to public transport',desc:'Taking bus/metro instead of your car cuts transport emissions by up to 70%.',saving:'Save ~'+(t*0.7).toFixed(1)+' kg CO₂/day'});
+    if(vt!=='walk'&&vt!=='train'&&vt!=='bus') tips.push({icon:'🚲',title:'Cycle for short trips',desc:'For trips under 5 km, cycling produces zero emissions and keeps you fit!',saving:'Zero emissions for short trips'});
+    if(dt==='heavy_meat'||dt==='mixed') tips.push({icon:'🥗',title:'Try Meatless Monday',desc:'Replacing one meat meal per day with plant-based food reduces food emissions by up to 50%.',saving:'Save ~'+(f*0.5).toFixed(1)+' kg CO₂/day'});
+    if(elec>5) tips.push({icon:'💡',title:'Switch to LED lighting',desc:'LED bulbs use 75% less energy. Turn off lights when not in use.',saving:'Save ~'+(elec*0.2).toFixed(1)+' kg CO₂/day'});
+    if(ac>1) tips.push({icon:'🌡️',title:'Optimize AC usage',desc:'Set AC to 24°C. Each degree higher saves about 6% electricity.',saving:'Save ~'+(ac*0.15).toFixed(1)+' kg CO₂/day'});
+    if(orders>0) tips.push({icon:'📦',title:'Batch your orders',desc:'Combine multiple deliveries into one to reduce packaging and transport emissions.',saving:'Reduces packaging waste by 40%'});
+    if(waste==='high'||waste==='medium') tips.push({icon:'♻️',title:'Start composting',desc:'Composting food waste diverts 30% of household waste from landfills.',saving:'Reduces waste CO₂ by ~30%'});
+    tips.push({icon:'🌳',title:'Plant a tree',desc:'A single tree absorbs about 21 kg of CO₂ per year.',saving:'21 kg CO₂ absorbed per year'});
+    document.getElementById('tipsContainer').innerHTML=`<div class="section-label">${tips.length} personalized tips</div>`+tips.map(tip=>`
+      <div class="tip-card"><div class="tip-icon">${tip.icon}</div><div class="tip-content"><h4>${tip.title}</h4><p>${tip.desc}</p><div class="tip-saving">${tip.saving}</div></div></div>`).join('');
+  }
+
+  function saveHistory(total) {
+    const h=JSON.parse(localStorage.getItem('carbonHistory')||'[]');
+    h.push({date:new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),val:total});
+    if(h.length>30)h.shift();
+    localStorage.setItem('carbonHistory',JSON.stringify(h));
+  }
+
+  function renderHistory() {
+    const h=JSON.parse(localStorage.getItem('carbonHistory')||'[]');
+    if(!h.length){document.getElementById('historyContainer').innerHTML='<div class="empty-state"><div class="e-icon">📅</div><p>No history yet. Start tracking to see your progress!</p></div>';return;}
+    document.getElementById('historyContainer').innerHTML=`<div class="section-label">Last ${h.length} entries</div>`+[...h].reverse().map((item,i)=>{
+      const prev=h[h.length-2-i];
+      let delta='';
+      if(prev){const diff=item.val-prev.val;delta=diff>0?`<span class="history-delta" style="color:#f87171">▲${diff.toFixed(1)}</span>`:`<span class="history-delta" style="color:#4ade80">▼${Math.abs(diff).toFixed(1)}</span>`;}
+      const color=item.val<4?'#4ade80':item.val<8?'#a3e635':item.val<13?'#facc15':'#f87171';
+      return `<div class="history-item"><div class="history-date">${item.date}</div><div style="display:flex;align-items:center;gap:12px;">${delta}<div class="history-val" style="color:${color}">${item.val.toFixed(1)} kg</div></div></div>`;
+    }).join('');
+  }
+
+  function switchTab(tab, el) {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('panel-'+tab).classList.add('active');
+    if(tab==='history') renderHistory();
+  }
+
+  // ── AI CHAT ──
+  async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if(!msg) return;
+    input.value = '';
+    appendMsg('user', msg);
+    document.getElementById('sendBtn').disabled = true;
+    showTyping();
+
+    const context = lastScore > 0
+      ? `User's current carbon footprint data: Total: ${lastScore.toFixed(1)} kg CO₂/day. Transport: ${currentData.tCO2?.toFixed(2)||0} kg (${currentData.vt}, ${currentData.km}km). Food: ${currentData.fCO2?.toFixed(2)||0} kg (${currentData.dt}). Energy: ${currentData.eCO2?.toFixed(2)||0} kg (${currentData.elec}kWh electricity, ${currentData.ac}h AC). Shopping/Waste: ${currentData.sCO2?.toFixed(2)||0} kg. Grade: ${lastScore<4?'Excellent':lastScore<8?'Good':lastScore<13?'Average':'High Impact'}. Indian average is ~5.2 kg CO₂/day.`
+      : 'User has not calculated their footprint yet.';
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `You are GreenAI, a friendly carbon footprint expert assistant inside the CarbonLens app. You help Indian users understand and reduce their carbon emissions. Be conversational, concise (2-4 sentences max), use emojis occasionally, and give practical India-specific advice. ${context}`,
+          messages: [{ role: 'user', content: msg }]
+        })
+      });
+      const data = await res.json();
+      hideTyping();
+      const reply = data.content?.[0]?.text || "Sorry, I couldn't get a response. Please try again!";
+      appendMsg('bot', reply);
+    } catch(err) {
+      hideTyping();
+      appendMsg('bot', "Oops! Something went wrong. Please check your connection and try again. 🌿");
+    }
+    document.getElementById('sendBtn').disabled = false;
+  }
+
+  function sendChip(el) {
+    document.getElementById('chatInput').value = el.textContent;
+    sendMessage();
+  }
+
+  function handleKey(e) {
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+  }
+
+  function appendMsg(role, text) {
+    const msgs = document.getElementById('chatMessages');
+    const time = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    msgs.innerHTML += `<div class="msg ${role}"><div class="msg-bubble">${text}</div><div class="msg-time">${time}</div></div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function showTyping() {
+    document.getElementById('chatMessages').innerHTML += `<div class="msg bot" id="typingIndicator"><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>`;
+    document.getElementById('chatMessages').scrollTop = 99999;
+  }
+
+  function hideTyping() {
+    const t = document.getElementById('typingIndicator');
+    if(t) t.remove();
+  }
+
+  renderHistory();
+</script>
+</body>
+</html>
