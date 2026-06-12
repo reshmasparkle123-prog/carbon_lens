@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node tests/tests.js"
+    "test": "node tests.js"
   },
   "keywords": ["carbon-footprint", "sustainability", "AI", "India", "green-tech"],
   "author": "Reshma K",
