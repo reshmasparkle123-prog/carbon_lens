@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="CarbonLens - Track and reduce your daily carbon footprint with AI-powered personalized insights for Indian users."/>
+  <meta name="theme-color" content="#0a0f0a"/>
+  <meta http-equiv="X-Content-Type-Options" content="nosniff"/>
+  <meta http-equiv="X-Frame-Options" content="DENY"/>
+  <title>CarbonLens – AI Carbon Footprint Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<header role="banner">
+  <div class="hero">
+    <div class="hero-label" aria-hidden="true">🌱 CarbonLens</div>
+    <h1>Know your <span>impact.</span><br>Change your future.</h1>
+    <p>Track daily activities, measure your carbon footprint, and get personalized AI-powered insights to live greener.</p>
+  </div>
+</header>
+
+<main id="main-content">
+
+  <section aria-label="Your carbon footprint score" class="score-section">
+    <div class="score-card" role="region" aria-live="polite" aria-atomic="true">
+      <div class="ring-wrap" role="img" aria-label="Carbon footprint score indicator">
+        <svg width="160" height="160" viewBox="0 0 160 160" aria-hidden="true">
+          <circle class="ring-bg" cx="80" cy="80" r="70"/>
+          <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="70" stroke="#4ade80"/>
+        </svg>
+        <div class="ring-text">
+          <div class="ring-num" id="scoreNum">0</div>
+          <div class="ring-unit">kg CO₂/day</div>
+        </div>
+      </div>
+      <div class="score-label">Your daily carbon footprint</div>
+      <div class="score-grade" id="scoreGrade" role="status">— Enter data below</div>
+    </div>
+  </section>
+
+  <nav aria-label="App sections">
+    <div class="tabs" role="tablist">
+      <button class="tab active" role="tab" aria-selected="true" aria-controls="panel-track" id="tab-track" onclick="switchTab('track', this)">📊 Track</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="panel-tips" id="tab-tips" onclick="switchTab('tips', this)">💡 Tips</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="panel-ai" id="tab-ai" onclick="switchTab('ai', this)">🤖 AI Chat</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="panel-history" id="tab-history" onclick="switchTab('history', this)">📅 History</button>
+    </div>
+  </nav>
+
+  <!-- TRACK -->
+  <section class="panel active" id="panel-track" role="tabpanel" aria-labelledby="tab-track">
+
+    <div class="input-card">
+      <h3><span class="icon" aria-hidden="true">🚗</span> Transport</h3>
+      <div class="field">
+        <label for="vehicleType">Vehicle type</label>
+        <select id="vehicleType" aria-required="true">
+          <option value="petrol_car">Petrol Car</option>
+          <option value="diesel_car">Diesel Car</option>
+          <option value="ev">Electric Vehicle</option>
+          <option value="bike">Motorbike</option>
+          <option value="auto">Auto Rickshaw</option>
+          <option value="bus">Bus / Metro</option>
+          <option value="train">Train</option>
+          <option value="walk">Walk / Cycle</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="kmTravel">Kilometres travelled today</label>
+        <input type="number" id="kmTravel" placeholder="e.g. 20" min="0" max="2000" value="0" aria-required="true" aria-describedby="kmTravel-err"/>
+        <div class="field-error" id="kmTravel-err" role="alert"></div>
+      </div>
+    </div>
+
+    <div class="input-card">
+      <h3><span class="icon" aria-hidden="true">🍽️</span> Food</h3>
+      <div class="field">
+        <label for="dietType">Diet type</label>
+        <select id="dietType" aria-required="true">
+          <option value="vegan">Vegan</option>
+          <option value="vegetarian" selected>Vegetarian (Indian)</option>
+          <option value="mixed">Mixed (some meat)</option>
+          <option value="heavy_meat">Heavy Meat Eater</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="meals">Meals today</label>
+        <input type="number" id="meals" placeholder="e.g. 3" min="1" max="6" value="3" aria-required="true" aria-describedby="meals-err"/>
+        <div class="field-error" id="meals-err" role="alert"></div>
+      </div>
+    </div>
+
+    <div class="input-card">
+      <h3><span class="icon" aria-hidden="true">⚡</span> Energy</h3>
+      <div class="field">
+        <label for="electricity">Electricity used today (kWh)</label>
+        <input type="number" id="electricity" placeholder="e.g. 5" min="0" max="500" value="5" aria-required="true" aria-describedby="electricity-err"/>
+        <div class="field-error" id="electricity-err" role="alert"></div>
+      </div>
+      <div class="field">
+        <label for="acHours">AC / fan hours</label>
+        <input type="number" id="acHours" placeholder="e.g. 2" min="0" max="24" value="0" aria-required="true" aria-describedby="acHours-err"/>
+        <div class="field-error" id="acHours-err" role="alert"></div>
+      </div>
+    </div>
+
+    <div class="input-card">
+      <h3><span class="icon" aria-hidden="true">🛍️</span> Shopping &amp; Waste</h3>
+      <div class="field">
+        <label for="orders">Online orders today</label>
+        <input type="number" id="orders" placeholder="e.g. 0" min="0" max="50" value="0" aria-required="true" aria-describedby="orders-err"/>
+        <div class="field-error" id="orders-err" role="alert"></div>
+      </div>
+      <div class="field">
+        <label for="waste">Waste generated</label>
+        <select id="waste" aria-required="true">
+          <option value="low">Low (minimal waste)</option>
+          <option value="medium" selected>Medium (normal day)</option>
+          <option value="high">High (lot of packaging)</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()" aria-label="Calculate my daily carbon footprint">
+      Calculate My Footprint →
+    </button>
+
+    <div style="margin-top:24px;display:none;" id="breakdownSection" aria-live="polite">
+      <div class="section-label">Breakdown</div>
+      <div id="breakdownList"></div>
+      <div class="equivalent-box">
+        <div class="equivalent-label">🌳 CO₂ equivalent</div>
+        <div id="equivalentText"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIPS -->
+  <section class="panel" id="panel-tips" role="tabpanel" aria-labelledby="tab-tips">
+    <div id="tipsContainer" aria-live="polite">
+      <div class="empty-state">
+        <div class="e-icon" aria-hidden="true">💡</div>
+        <p>Calculate your footprint first to get personalized tips!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI CHAT -->
+  <section class="panel" id="panel-ai" role="tabpanel" aria-labelledby="tab-ai">
+    <div class="chat-wrap">
+      <div class="chat-header">
+        <div class="chat-avatar" aria-hidden="true">🌿</div>
+        <div class="chat-header-info">
+          <h3>GreenAI Assistant</h3>
+          <p>Powered by Claude · Carbon expert</p>
+        </div>
+        <div class="chat-status" role="status" aria-label="Assistant online"></div>
+      </div>
+      <div class="chat-messages" id="chatMessages" role="log" aria-label="Chat messages" aria-live="polite" aria-relevant="additions">
+        <div class="msg bot">
+          <div class="msg-bubble">Hi! 👋 I'm your personal carbon footprint assistant. I can help you understand your environmental impact and suggest ways to live greener. Calculate your footprint first, or just ask me anything! 🌱</div>
+          <div class="msg-time">Now</div>
+        </div>
+      </div>
+      <div class="chat-chips-wrap">
+        <div class="quick-chips" role="group" aria-label="Suggested questions">
+          <button class="chip" onclick="sendChip(this)" type="button">How to reduce my footprint?</button>
+          <button class="chip" onclick="sendChip(this)" type="button">What is carbon footprint?</button>
+          <button class="chip" onclick="sendChip(this)" type="button">Best eco habits for Indians?</button>
+          <button class="chip" onclick="sendChip(this)" type="button">Is my score good?</button>
+        </div>
+      </div>
+      <div class="chat-input-wrap">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          placeholder="Ask about your carbon footprint..."
+          rows="1"
+          onkeydown="handleKey(event)"
+          aria-label="Type a message to GreenAI"
+          maxlength="500"
+        ></textarea>
+        <button class="chat-send" id="sendBtn" onclick="sendMessage()" aria-label="Send message" type="button">➤</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history">
+    <div id="historyContainer" aria-live="polite">
+      <div class="empty-state">
+        <div class="e-icon" aria-hidden="true">📅</div>
+        <p>No history yet. Start tracking to see your progress!</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="bottom-pad"></div>
+
+<script src="utils.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
