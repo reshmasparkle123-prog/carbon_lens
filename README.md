@@ -3,7 +3,7 @@
 > Track daily activities, measure your carbon footprint, and get personalized AI-powered tips to live greener.
 
 ## Live Demo
-**[https://astonishing-paletas-73b660.netlify.app](https://astonishing-paletas-73b660.netlify.app)**
+https://carbon-lens.onrender.com
 
 ---
 
